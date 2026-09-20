@@ -1,42 +1,62 @@
+# Linear Algebra Assistant AI
 
-# 这是什么？(what's this)
+基于 RAG 的线性代数智能学习助手：以线性代数教材为知识库，像聊天一样提问，获得教材知识增强的回答。
 
->这是一个使用 *线性代数* 教材作为原始数据的 **RAG** 练手项目。(it's a **RAG** project for practicing that base on *linear algebra* docs)
+## 功能
 
-![项目界面 interface]()
+- 对话式问答：围绕线性代数概念、定理、例题进行多轮对话
+- 教材知识增强：回答基于教材内容检索生成，降低幻觉
+- 数学内容优化：公式 LaTeX 规范化与语义分块，支持插图语义化处理
 
-## 它能做什么？ (what can it do)
+## 技术栈
 
-1. 它能让你像与ai聊天一样使用；(you can use it like you just communicate with ai)
-2. 在遇到线性代数相关问题时可以得到增强；(get enhanced when it comes to linear algebra relevant topic)
+| 模块 | 技术 |
+|---|---|
+| 前端 | Streamlit |
+| 大模型 | 通义千问（DashScope / OpenAI SDK） |
+| 向量数据库 | Qdrant |
+| 文档解析 | MinerU（公式 / 表格 / 图片识别） |
+| 语言 | Python 3.13 |
 
-## 技术栈有哪些？(what tech stack does it contain)
+## 架构
 
-- 前端：streamlit
-- 后端：python
-- 数据库：qdrant
+```
+教材 PDF → DPI 增强 → MinerU 解析 → LaTeX 规范化 → 语义分块 → 向量化 → Qdrant
+                                                                              │
+Streamlit 对话 UI ← 通义千问 API ← Prompt 组装 ← Query Rewriter ← Router ← 向量检索
+```
 
-## 虚拟环境 (visual environment)
+- **查询链路**：对话历史经 LLM Query Rewriting 改写 → Router 意图路由 → Qdrant 向量检索 → 上下文组装后调用大模型生成回答
+- **离线管线**：`data_process/` 下完成解析、清洗、分块、入库全流程，解析使用独立虚拟环境（`mineru_parse`）避免依赖冲突
+- **效果评估**：`test/` 下提供测试集生成与检索质量自动化评估脚本
 
-- 主环境.ven (main environment .venv)：项目运行环境。(environment used to run project) 包括：python=3.13 / transformers=4.56.0 / streamlit=1.60.0 / qdrant-client=1.18.0 / openai=1.109.1
-- 解析环境mineru_parse (parse environment mineru_parse)：用于解析文档的环境，防止与项目运行环境其他依赖冲突。(used to parse unstructed docs) 包括：mineru=3.4.5 / python=3.12
+## 快速开始
 
-# 安装 (install)
+前置：Python 3.12+，配置环境变量 `DASHSCOPE_API_KEY`
 
-> git clone https://github.com/77micz/Linear_Algebra_Assistant_AI.git
+```bash
+git clone https://github.com/77micz/Linear_Algebra_Assistant_AI.git
+cd Linear_Algebra_Assistant_AI
 
+# 初始化环境
+python setup_envs.py
 
-# 运行 (run)
+# 启动应用
+streamlit run ./app/ui_logic.py
+```
 
-> 需要配置DASHSCOPE_API_KEY到环境变量 (you need to set DASHSCOPE_API_KEY to environment variable)
+## 目录结构
 
-1. 在根目录下，`python setup_envs.py` (run `python setup_envs.py` in the root directory)
+```
+├── app/                  # Streamlit 前端与交互逻辑
+├── ai_models/            # 大模型 / Embedding 封装
+├── func/                 # RAG 核心：检索、路由、查询改写
+├── data_process/         # 离线管线：解析、LaTeX 处理、分块、向量化入库
+├── test/                 # 测试集生成与 RAG 效果评估
+├── utils/                # 向量库批量操作等工具
+└── data/config/          # 向量库 collection 与 MinerU 配置
+```
 
-2. 在根目录下，`streamlit run .\app\ui_logic.py` (run `streamlit run .\app\ui_logic.py` in the root directory)
-
-
-# License
+## License
 
 MIT
-
-
